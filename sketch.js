@@ -12,7 +12,7 @@ let rect = new Rectangle(canv.width/2, canv.height/2, canv.width, canv.height);
 let qtree = new QuadTree(rect, 4);
 
 let cntData = cnt.getImageData(0, 0, canv.width, canv.height);
-
+let range = new Rectangle(250, 250, 100, 100);
 
 function getMousePosition(canvas, event) {
     let rect = canvas.getBoundingClientRect();
@@ -31,19 +31,27 @@ function drawPixel (x, y, r, g, b, a) {
     cntData.data[index + 3] = Number(a);
 }
 
+function draw_rectangle(rectangle, color) {
+    cnt.beginPath();
+    cnt.strokeStyle = color;
+    cnt.rect(rectangle.x - rectangle.w/2, rectangle.y - rectangle.h/2, rectangle.w, rectangle.h);
+    cnt.stroke();
+}
 function draw_qtree(q) {
     if(!q) return;
-    cnt.beginPath();
-    cnt.rect(q.rect.x - q.rect.w/2, q.rect.y - q.rect.h/2, q.rect.w, q.rect.h);
-    cnt.stroke();
-    draw_qtree(q.ne);
-    draw_qtree(q.nw);
-    draw_qtree(q.se);
-    draw_qtree(q.sw);
+    draw_rectangle(q.rect, "black")
+
+    if(q.divided) {
+        draw_qtree(q.ne);
+        draw_qtree(q.nw);
+        draw_qtree(q.se);
+        draw_qtree(q.sw);
+    }
+    
     return;
 }
 function drawPoint(e) {
-
+    console.log("draw")
     let pt = new Point(getMousePosition(canv, e).x, getMousePosition(canv, e).y)
     qtree.insert(pt);
     console.log(qtree);
@@ -54,8 +62,18 @@ function drawPoint(e) {
     }
     cnt.putImageData(cntData, 0, 0);
     draw_qtree(qtree)
-    
-    
+    draw_rectangle(range, "red")
+    let found = []
+    qtree.query(range, found)
+
+    for(let pt of found) {
+        for(let i=0;i<3;i++) {
+            for(let j=0;j<3;j++){
+                drawPixel (i+pt.x, j+pt.y, 0, 255, 0, 255);
+            }
+        }
+    }
+    console.log(found)
 }
 
 canv.addEventListener("mousedown", function(e) {
@@ -70,6 +88,8 @@ canv.addEventListener("mousemove", function(e) {
 
 canv.addEventListener("mouseup", function(e) {
     isDrawing = false;
-    drawPoint(e);
 });
+draw_rectangle(range, "red")
 
+
+// console.log(range)

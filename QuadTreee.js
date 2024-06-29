@@ -14,12 +14,20 @@ export class Rectangle {
     }
 
     contains(point) {
-        if(point.x <= this.x+this.w && 
-            point.x>=this.x-this.w && 
-            point.y>=this.y-this.h && 
-            point.y<=this.y+this.w) return true;
+        if(point.x <= this.x+this.w/2 && 
+            point.x>=this.x-this.w/2 && 
+            point.y>=this.y-this.h/2 && 
+            point.y<=this.y+this.w/2) return true;
 
         return false;
+    }
+
+    intersects(range) {
+            return !(range.x - range.w/2 > this.x + this.w/2 ||
+                range.x + range.w/2 < this.x - this.w/2 ||
+                range.y + range.h/2 < this.y - this.w/2 ||
+                range.y - range.h/2 > this.y + this.w/2
+            );
     }
 }
 
@@ -51,7 +59,15 @@ export class QuadTree {
 
     insert(point) {
         if(!this.rect.contains(point)) return;
-        if(this.points.length<this.cap) this.points.push(point);
+        console.log(this.points)
+        if(point in this.points) {
+            console.log("p")
+            return;
+        }
+        if(this.points.length<this.cap) {
+            this.points.push(point);
+            // console.log("inserted")
+        }
         else {
             if(!this.divided) {
                 this.subdivide();
@@ -62,5 +78,25 @@ export class QuadTree {
             this.sw.insert(point);
             this.nw.insert(point);
         }
+    }
+
+    query(range, found) {
+        let count = 0;
+        if(!this.rect.intersects(range)) {
+            return found;
+        }
+
+        for(let p of this.points) {
+            if(range.contains(p)) {
+                found.push(p);
+            }
+        }
+        if(this.divided) {
+            this.nw.query(range, found);
+            this.ne.query(range, found);
+            this.sw.query(range, found);
+            this.se.query(range, found);
+        }
+        return;
     }
 }
